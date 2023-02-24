@@ -22,10 +22,18 @@
  * `Dart_InitializeApiDL` with `NativeApi.initializeApiDLData`.
  */
 
-#ifdef __cplusplus
-#define DART_EXTERN extern "C"
+
+// Adding compile time definition of DART_SHARED_LIB is not really doing anything on Windows.
+#ifdef _WIN32
+#define DLLEXPORT __declspec(dllexport)
 #else
-#define DART_EXTERN extern
+#define DLLEXPORT __attribute__((visibility("default")))
+#endif
+
+#ifdef __cplusplus
+#define DART_EXTERN extern "C" DLLEXPORT
+#else
+#define DART_EXTERN extern DLLEXPORT
 #endif
 
 DART_EXTERN intptr_t Dart_InitializeApiDL(void* data);
@@ -103,7 +111,13 @@ typedef void (*Dart_NativeMessageHandler_DL)(Dart_Port_DL dest_port_id,
     (Dart_Handle port, Dart_Port_DL * port_id))                                \
   /* Scopes */                                                                 \
   F(Dart_EnterScope, void, ())                                                 \
-  F(Dart_ExitScope, void, ())
+  F(Dart_ExitScope, void, ())                                                  \
+  /* Isolates */                                                               \
+  /* https://github.com/dart-lang/sdk/issues/51254 */                          \
+  /* https://github.com/dart-lang/sdk/issues/51254#issuecomment-1418987092 */  \
+  F(Dart_CurrentIsolate, Dart_Isolate, ())                                     \
+  F(Dart_EnterIsolate, void, (Dart_Isolate isolate))                           \
+  F(Dart_ExitIsolate, void, ())
 
 #define DART_API_ALL_DL_SYMBOLS(F)                                             \
   DART_NATIVE_API_DL_SYMBOLS(F)                                                \
